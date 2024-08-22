@@ -18,16 +18,51 @@ app.get("/product", (req, res) => {
 });
 
 // POST method to add a product
+// app.post("/addproduct", (req, res) => {
+//     fs.readFile("./db.json", "utf-8", (err, data) => {
+//         if (err) {
+//             res.send(err);
+//         } else {
+//             const newdata = JSON.parse(data);
+//             newdata.push({
+//                 ...req.body,
+//                 id: ++lastId // Increment the ID and assign it
+//             });
+//             fs.writeFile("./db.json", JSON.stringify(newdata), (err) => {
+//                 if (err) {
+//                     res.send(err);
+//                 } else {
+//                     res.send("Product added successfully");
+//                 }
+//             });
+//         }
+//     });
+// });
+
+
+
 app.post("/addproduct", (req, res) => {
     fs.readFile("./db.json", "utf-8", (err, data) => {
         if (err) {
             res.send(err);
         } else {
             const newdata = JSON.parse(data);
+            
+            // Determine the last used ID or start from 1 if no products exist
+            let lastId = newdata.length > 0 ? Math.max(...newdata.map(product => product.id)) : 0;
+            
+            // If the ID is provided and already exists, increment the ID
+            let newId = req.body.id || lastId + 1;
+            while (newdata.some(product => product.id === newId)) {
+                newId++;
+            }
+            
+            // Push the new product with the determined ID
             newdata.push({
                 ...req.body,
-                id: ++lastId // Increment the ID and assign it
+                id: newId
             });
+
             fs.writeFile("./db.json", JSON.stringify(newdata), (err) => {
                 if (err) {
                     res.send(err);
@@ -38,6 +73,7 @@ app.post("/addproduct", (req, res) => {
         }
     });
 });
+
 
 // PATCH method to update a particular field
 app.patch("/editproduct/:id", (req, res) => {
